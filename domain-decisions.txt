@@ -1,0 +1,459 @@
+Inventory Management System — Guided Domain Decisions
+=====================================================
+
+Purpose
+-------
+This file records the questions asked during the guided domain-design process
+and the decisions made in response. It is a learning record, not an
+implementation specification.
+
+1. What belongs to the domain?
+   Response: Inventory Records and Stock Levels are essential domain concepts.
+
+2. How should storage be organized for records and stock?
+   Response: The physical database topology is still undecided. One database
+   may store both concerns, or separate databases may be used. That decision
+   belongs to infrastructure, not the domain.
+
+3. What is an adapter?
+   Response: An adapter translates between the application core and an
+   external system or actor. Examples include an HTTP adapter, a CLI adapter,
+   or a database adapter. The core defines what it needs; the adapter decides
+   how the outside world provides it.
+
+4. What must always be true about an item's stock at a location?
+   Response:
+   - An item can exist in multiple locations.
+   - Stock cannot be negative.
+   - An item should eventually be sold in at least one location.
+
+5. Must an item have a location when it is created?
+   Response: No. An item may temporarily exist before being assigned to a
+   location.
+
+6. What should happen when assigning an item to an already-assigned location?
+   Response: It should be an idempotent no-op. The system should continue
+   running, and the caller should receive status information rather than a
+   printed message from the domain.
+
+7. How should assignment outcomes be distinguished?
+   Response:
+   - Changed: the item-location association was newly created.
+   - Already assigned: the association already existed.
+   - Error: the operation genuinely failed.
+   Errors are reserved for failures; an already-satisfied request is a
+   successful result with status information.
+
+8. Which location operations are needed?
+   Response: The system must support adding a new location association,
+   replacing an existing location association, and removing a previous
+   location while preserving the remaining associations.
+
+9. How are valid locations managed?
+   Response: Locations form a managed registry. Users may add or remove
+   locations, and the registry validates item-location associations.
+
+10. Can a location with stock be removed?
+    Response: No. A location cannot be removed while it contains items with
+    non-zero stock.
+
+11. Can a zero-stock location be removed?
+    Response: Yes. A location with only zero-stock associations may be removed,
+    while historical records are retained.
+
+12. What happens to a removed location's identity?
+    Response: Location identifiers remain permanently unique. A retired
+    identifier cannot be reused for a new location.
+
+13. What is the current unanswered question?
+    Question: What attributes must an inventory record contain to identify and
+    describe a product, and which of those attributes must be unique?
+
+14. What fields should an inventory record contain?
+    Response:
+    - ID: unique product identity.
+    - Name: string description.
+    - Brand: string description.
+    - Type/category: a broad grouping such as food, furniture, or home
+      gadgets. A complete universal taxonomy is intentionally deferred.
+    Note: The product ID is the primary identity of the product. It will be a
+    foreign key in related tables such as stock or item-location associations,
+    rather than being a foreign key merely because it is unique.
+
+15. Should name and brand be unique?
+    Response: Yes. The combination of name and brand must be unique.
+    Follow-up: The matching rules still need definition, including case,
+    whitespace, spelling, and product variants such as size or packaging.
+
+16. How should case and product variants be handled?
+    Response:
+    - Product identity comparisons should treat casing consistently; values are
+      currently planned to be stored in lowercase.
+    - Variants such as Acme Milk 1 liter, 2 liters, and 500 milliliters are
+      different products.
+    - Structured package-size information should be considered as separate
+      fields instead of being encoded only in the name.
+    Follow-up: Decide whether the structured field represents package size,
+    capacity, weight, or another measurable product attribute. Do not confuse
+    it with stock quantity.
+
+17. How should package size be represented?
+    Response: Use separate structured values such as amount `2` and unit
+    `liters`, rather than encoding the size as an opaque string such as `2l`.
+    This makes validation clearer and reduces operator-input mistakes such as
+    entering an invalid unit character. The amount/unit pair represents the
+    product's package size, not its stock quantity.
+    Follow-up: Define which units are valid and whether fractional amounts
+    such as 0.5 liters are allowed.
+
+18. Should equivalent measurements be normalized?
+    Response: Units come from a controlled list. Equivalent values such as
+    0.5 liters and 500 milliliters should be considered for normalization so
+    that equivalent package sizes are not treated as different products.
+    Follow-up: Define the measurement dimensions and canonical unit for each
+    dimension, while keeping display formatting separate from stored identity.
+
+19. Which measurement dimensions should the first version support?
+    Response: Volume, weight, and count.
+    Note: Length and area may matter for specialized inventory such as fabric,
+    cable, or flooring, but are intentionally not included in the initial
+    scope. Count also needs care because `each`, `box`, and `pack` may require
+    explicit packaging-conversion rules rather than simple unit conversion.
+
+20. How should count be represented initially?
+    Response: Count supports only individual units (`each`). Package
+    conversions such as boxes and packs are out of scope for the first
+    version.
+
+21. What constraints apply to count values?
+    Response: Count values must be whole numbers greater than zero. Packaging
+    conversions are not supported in the first version.
+
+22. What constraints apply to volume and weight amounts?
+    Response: Volume and weight amounts must be greater than zero and may use
+    decimal values such as `0.5 liters` or `1.25 kilograms`.
+
+23. Should the initial inventory record include a type/category field?
+    Response: The field may overcomplicate the first version. Since no
+    controlled vocabulary or behavior currently depends on it, defer it until
+    a concrete filtering, reporting, or business rule requires categories.
+
+24. What fields are included in the initial inventory record?
+    Response: The initial record contains only `id`, `name`, `brand`, `amount`,
+    and `unit`. Product type/category is deferred.
+
+25. Is amount/unit mandatory for every inventory record?
+    Response: Yes. Every record requires amount and unit. Individual products
+    use amount `1` and unit `each`.
+    Open consistency question: Since variants such as 1 liter and 2 liters
+    are distinct products, the earlier name-and-brand uniqueness rule may need
+    to include normalized amount and unit.
+
+26. What is the product business-identity rule?
+    Response: The normalized combination of name, brand, amount, and unit must
+    be unique. This allows different measurable variants of the same branded
+    product to coexist as separate inventory records.
+
+27. Who generates the product ID?
+    Response: The application/domain generates the product ID before
+    persistence. The database stores and enforces the identity rather than
+    inventing it.
+
+28. Which technical ID format will be used?
+    Response: UUID. UUIDs support application-side generation, work well with
+    multiple application instances, and do not expose product count or
+    creation order. The database still enforces UUID uniqueness and the
+    separate business-identity constraint.
+
+29. What fields should a stock level contain?
+    Response:
+    - Units: integer whole-number quantity.
+    - Location: required location reference.
+    - Inventory product: required product reference.
+    A separate stock-level ID is not considered necessary because the stock
+    level is identified by its product and location.
+    Note: In the domain, these should be references to product and location
+    identities; database foreign-key terminology belongs to persistence. The
+    product-plus-location pair is a candidate composite identity.
+
+30. Should a zero-unit stock level remain persisted?
+    Response: Open decision. Keeping a zero-unit row preserves an explicit
+    product-location relationship. Removing it creates a sparse representation
+    where absence means zero stock and may reduce stored rows. The decision
+    must consider query patterns, atomic updates, and whether product-location
+    assignment is distinct from positive stock availability.
+
+31. What does stock level "current state" mean?
+    Clarification: A stock level represents the currently persisted quantity
+    for a product at a location. This is independent of caching; the first
+    version will not implement a cache. Future stock movements such as sales,
+    receipts, or adjustments may explain transitions that result in the
+    current state.
+
+32. Should zero-unit stock levels remain persisted?
+    Response: Yes. A zero-unit stock level remains persisted so the system can
+    preserve the product-location assignment even when no units are currently
+    available. Product-location association and stock quantity are related but
+    distinct concepts.
+
+33. Which operations can change stock units?
+    Response: The initial stock operations are receiving, selling, and
+    transferring inventory. Manual adjustment is reserved for eventual user
+    management errors.
+    Follow-up: Transfers affect two product-location stock levels and need
+    explicit atomicity and validation rules. Manual adjustments may require
+    reasons or audit information when introduced.
+
+34. What happens when a transfer exceeds source stock?
+    Response: The entire transfer is rejected; no stock level is changed. The
+    caller should receive enough information to show a user-facing message,
+    but presentation remains outside the domain.
+
+35. What happens when the transfer destination is not yet assigned?
+    Response: If the destination location is valid, the system automatically
+    creates the product-location stock record as part of the transfer. This is
+    a successful state change, with an informational message for the user;
+    it is not an error.
+
+36. Should receiving create missing product-location stock records?
+    Response: Yes. Receiving at a valid location automatically creates the
+    product-location stock record when it does not already exist. This is a
+    successful state change and may produce an informational user message.
+
+37. What happens when selling without available stock?
+    Response: A sale is rejected when no stock record exists or when the
+    existing stock level has zero units. The operation must not create a stock
+    record and must not reduce stock below zero.
+
+38. What quantities are valid for stock operations?
+    Response: Receiving, selling, and transfer quantities must all be positive
+    whole numbers greater than zero.
+
+39. Can inactive locations participate in stock movements?
+    Response: No. Inactive/retired locations cannot participate in receiving,
+    selling, or transfers. They remain available only for historical reference,
+    and their identifiers cannot be reused.
+
+40. What is the initial status of a new location?
+    Response: Every newly created location starts as active.
+
+41. What fields should a location contain?
+    Response: A location contains a unique identifier, a name string, an
+    address string, and an active/inactive status.
+    Open question: Decide whether names, addresses, or their combination must
+    be unique; the permanent location identifier remains the authoritative
+    identity.
+
+42. Must location names or addresses be unique?
+    Response: No. Different locations may share the same name and even the
+    same address text, for example when they belong to different cities. The
+    unique location ID is the only authoritative identity.
+    Follow-up: Decide whether address remains one free-text field or is
+    structured with city and other geographic components.
+
+43. How should location address data be represented?
+    Response: Use separate `street` and `city` fields. Country is omitted from
+    the first version because the system assumes operation within one country.
+    Location name remains descriptive and non-unique.
+
+44. Which technical ID format should locations use?
+    Response: Sequential integers, for simplicity. This is a valid professional
+    choice when locations are centrally managed and created through one
+    persistence system. The generation owner remains to be decided: a database
+    sequence is simple and collision-safe, while application-side generation
+    requires coordination.
+
+45. Who generates sequential location IDs?
+    Response: The database generates location IDs using a sequential order.
+    The application receives the generated ID after persistence.
+
+46. Can inactive locations be reactivated?
+    Response: Yes. A retired location may be reactivated later and may then
+    participate in new stock movements again. Its identifier remains unchanged
+    and unique throughout the lifecycle.
+
+47. What should location lifecycle operations be called?
+    Response: Use `ActivateLocation` and `DeactivateLocation`. These names
+    reflect reversible status transitions and avoid implying that historical
+    location data is physically deleted.
+
+48. What happens when a transfer uses the same source and destination?
+    Response: The transfer is rejected because it produces no meaningful
+    movement between locations.
+
+49. Can inventory products be deactivated or discontinued?
+    Response: No. Inventory products are permanent once created. Product
+    records are not deactivated or removed from the catalog.
+
+50. Can product identity fields be edited?
+    Response: No. `name`, `brand`, `amount`, and `unit` are immutable after
+    creation. This preserves the product's technical and business identity.
+
+51. Can location descriptive fields be edited?
+    Response: No. A location's `name`, `street`, and `city` are immutable after
+    creation. The location ID remains stable; only its lifecycle status may
+    change through `ActivateLocation` and `DeactivateLocation`.
+
+52. Should stock movement history be retained?
+    Response: Yes. The system retains the history of all receiving, selling,
+    and transferring movements in addition to maintaining current stock
+    levels.
+    Follow-up: Define movement identity, immutable fields, timestamps, and the
+    location information required for each movement type.
+
+53. Which ID format should stock movements use?
+    Response: Stock movements use sequential database-generated IDs because
+    they are internal append-only records and are not exposed to external
+    clients. A separate business timestamp is still required; the ID is not
+    treated as event time.
+
+54. What fields should stock movements contain?
+    Response:
+    - ID: sequential database-generated identifier.
+    - Type: receiving, selling, transferring, or future movement types.
+    - Units: positive whole-number quantity.
+    - Product: required product reference.
+    - From location: source location when applicable.
+    - To location: destination location when applicable.
+    - Created-at timestamp.
+    Direction semantics require correction:
+    - Receiving: no source; destination is the receiving location.
+    - Selling: source is the location where the sale occurs; no destination.
+    - Transferring: both source and destination are required.
+    Follow-up: Decide whether one movement model with conditional locations is
+    preferable to distinct movement representations per operation.
+
+55. How should stock movement representations be structured?
+    Response: Use one movement model with conditional `from` and `to` location
+    references. Validation depends on the movement type: receiving requires a
+    destination, selling requires a source, and transferring requires both.
+
+56. Which timestamp should stock movements store?
+    Response: Store one `created_at` timestamp because movements are recorded
+    immediately when they happen. A separate `occurred_at` timestamp is not
+    needed in the initial version.
+
+57. Can recorded stock movements be corrected?
+    Response: Corrections are allowed but intentionally difficult and require
+    multiple confirmations. The correction mechanism is not yet defined.
+    Important follow-up: decide whether correction edits the original movement
+    or records compensating movements while preserving the original audit
+    history.
+
+58. How are stock movement corrections applied?
+    Response: After the required confirmations, the original movement is
+    edited directly. Compensating movements are not used in the first version.
+    Consequence: The movement history represents the corrected state, not a
+    complete immutable record of the original mistake. Correction metadata or
+    an audit trail may be needed later if stronger traceability is required.
+
+59. What happens to stock when a movement is corrected?
+    Response: The system automatically recalculates the affected stock levels
+    using the corrected movement values. The movement update and stock
+    recalculation must behave as one atomic operation.
+
+60. Which movement fields may be corrected?
+    Response: Every movement field may be corrected, including type, units,
+    product, source location, destination location, and timestamp. The same
+    type-specific validation rules apply to the corrected movement.
+    Follow-up: A correction must also be rejected if recalculating it would
+    violate stock invariants, such as producing negative stock.
+
+61. What happens when a correction would produce negative stock?
+    Response: The entire correction is rejected and the original movement and
+    all affected stock levels remain unchanged.
+
+62. How are movement types defined?
+    Response: Movement types are a fixed, closed set. The initial set is
+    receiving, selling, and transferring. New movement types must be added
+    explicitly rather than accepted as arbitrary strings.
+
+63. How many confirmations are required for movement correction?
+    Response: Exactly two explicit confirmations are required before a
+    correction may be applied.
+
+64. Who may provide correction confirmations?
+    Response: The same authorized user may provide both confirmations. The
+    first version does not require two different users.
+
+65. Is authentication or authorization in scope?
+    Response: No. The project will not implement authentication or
+    authorization. The two confirmations are workflow safeguards, not a
+    security boundary, and no user identity is recorded for authorization in
+    the first version.
+
+66. What is the first external entry point?
+    Response: The system will provide a simple web UI for users. The UI choice
+    and rendering approach remain to be defined.
+
+67. How should the web UI be rendered?
+    Response: Use server-rendered HTML from Go. A separate frontend
+    application and API-only client are out of scope for the first version.
+
+68. How should the server-rendered UI submit actions?
+    Response: Use standard HTML forms handled by server-side Go handlers. A
+    JSON API is not required in the first version.
+
+69. Which database should the project use?
+    Response: PostgreSQL. It is free and open source for local/self-hosted use,
+    and is intentionally selected for learning professional database setup,
+    constraints, transactions, migrations, and concurrent access.
+
+70. How should Go persist data in PostgreSQL?
+    Response: Start with explicit parameterized SQL using Go's `database/sql`
+    package and a PostgreSQL driver. Avoid an ORM initially to keep SQL,
+    transactions, and database constraints visible for learning. Consider
+    `sqlc` later if query repetition becomes significant.
+
+71. How should PostgreSQL schema changes be managed?
+    Response: Use versioned migration files. Each schema change is recorded in
+    order so fresh environments, tests, and deployments can reproduce the
+    database safely without manual edits.
+
+72. How should migration files be authored and executed?
+    Response: Use transparent, numbered SQL migration files executed by a
+    migration tool. Keep schema changes visible in PostgreSQL SQL rather than
+    defining them in Go code. Use ordered up/down migrations where supported.
+
+73. How should migrations be executed?
+    Response: Run migrations through a separate administrative command, not
+    automatically during application startup. Application startup should not
+    mutate database schema implicitly.
+
+74. Should migrations have a separate executable?
+    Response: Yes. Use a dedicated `cmd/migrate` executable separate from the
+    web server executable. Both commands may share configuration and database
+    packages while keeping operational responsibilities separate.
+
+75. How should application configuration be provided?
+    Response: Use a configuration file for normal settings, with environment
+    variables overriding sensitive values and deployment-specific settings such
+    as the PostgreSQL password. Secrets must not be committed to source
+    control.
+
+76. Which configuration-file format should be used?
+    Response: TOML. It is readable for operators, supports comments, and is
+    well suited to a small Go service configuration file. Environment
+    variables remain the override mechanism for secrets and deployment-specific
+    values.
+
+77. Should server and migration commands share configuration loading?
+    Response: Yes. Both `cmd/server` and `cmd/migrate` should use one shared
+    configuration-loading package so database settings and environment override
+    behavior do not diverge between commands.
+
+78. How should the configuration file be selected?
+    Response: Both commands load `config.toml` directly without a command-line
+    path flag. The first version assumes the command is run from the project
+    directory or deployment working directory containing that file.
+    Operational caveat: a fixed relative path depends on the process working
+    directory and may need revisiting for packaged deployments.
+
+79. Should config.toml contain development defaults?
+    Response: Yes. Commit `config.toml` with safe development defaults.
+    Sensitive values, especially the PostgreSQL password, must be supplied
+    through environment variables and never committed.
+
+80. Which non-sensitive settings belong in the initial configuration?
+    Response: Include PostgreSQL connection details, the HTTP server address,
+    and logging level. Sensitive values remain environment overrides.
