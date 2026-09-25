@@ -1,0 +1,13 @@
+# Safe development defaults. Supply secrets and deployment-specific values through environment variables.
+
+[server]
+address = ":8080"
+log_level = "info"
+
+[database]
+host = "localhost"
+port = 5432
+name = "inventory"
+user = "inventory"
+password = ""
+ssl_mode = "disable"
