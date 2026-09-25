@@ -48,6 +48,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	sellingRepository, err := postgres.NewStockSellingRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sellStockHandler, err := httpadapter.NewSellStockHandler(repository, locationRepository, sellingRepository)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/products/new", productHandler)
@@ -56,6 +64,7 @@ func main() {
 	mux.Handle("/locations", locationHandler)
 	mux.Handle("/locations/", locationHandler)
 	mux.Handle("/stock/receive", receiveStockHandler)
+	mux.Handle("/stock/sell", sellStockHandler)
 	mux.HandleFunc("/health", func(response http.ResponseWriter, _ *http.Request) {
 		response.WriteHeader(http.StatusOK)
 		_, _ = response.Write([]byte("ok\n"))

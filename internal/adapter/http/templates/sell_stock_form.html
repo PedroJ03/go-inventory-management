@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sell stock</title>
+</head>
+<body>
+  <main>
+    <h1>Sell stock</h1>
+    {{if .Message}}<p role="status" aria-live="polite">{{.Message}}</p>{{end}}
+    {{if .Result}}
+    <section aria-live="polite">
+      <h2>Sale recorded</h2>
+      <p>Current stock: <strong>{{.Result.Units}}</strong> units.</p>
+      <p>Movement ID: <code>{{.Result.MovementID}}</code></p>
+    </section>
+    {{end}}
+    {{if .Errors}}
+    <div role="alert">
+      <h2>Could not sell stock</h2>
+      <ul>{{range .Errors}}<li>{{.}}</li>{{end}}</ul>
+    </div>
+    {{end}}
+    <form method="post" action="/stock/sell">
+      <p>
+        <label for="product_id">Product UUID</label>
+        <input id="product_id" name="product_id" value="{{.ProductID}}" required>
+      </p>
+      <p>
+        <label for="location_id">Location ID</label>
+        <input id="location_id" name="location_id" value="{{.LocationID}}" inputmode="numeric" required>
+      </p>
+      <p>
+        <label for="units">Units</label>
+        <input id="units" name="units" value="{{.Units}}" inputmode="numeric" required>
+      </p>
+      <button type="submit">Sell stock</button>
+    </form>
+  </main>
+</body>
+</html>
