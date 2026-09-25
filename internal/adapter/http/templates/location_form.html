@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Location management</title>
+</head>
+<body>
+  <main>
+    <h1>Location management</h1>
+    {{if .Message}}<p role="status" aria-live="polite">{{.Message}}</p>{{end}}
+    {{if .Errors}}
+    <div role="alert">
+      <h2>Action could not be completed</h2>
+      <ul>{{range .Errors}}<li>{{.}}</li>{{end}}</ul>
+    </div>
+    {{end}}
+    {{if .Location}}
+    <section aria-live="polite">
+      <h2>{{.Location.Name}}</h2>
+      <p>{{.Location.Street}}, {{.Location.City}}</p>
+      <p>Status: <strong>{{if .Location.Active}}Active{{else}}Inactive{{end}}</strong></p>
+      {{if .Location.Active}}
+      <form method="post" action="/locations/{{.Location.ID}}/deactivate">
+        <button type="submit">Deactivate location</button>
+      </form>
+      {{else}}
+      <form method="post" action="/locations/{{.Location.ID}}/activate">
+        <button type="submit">Activate location</button>
+      </form>
+      {{end}}
+    </section>
+    {{end}}
+    <h2>Create location</h2>
+    <form method="post" action="/locations">
+      <p><label for="name">Name</label><input id="name" name="name" value="{{.Name}}" required></p>
+      <p><label for="street">Street</label><input id="street" name="street" value="{{.Street}}" required></p>
+      <p><label for="city">City</label><input id="city" name="city" value="{{.City}}" required></p>
+      <button type="submit">Create location</button>
+    </form>
+  </main>
+</body>
+</html>

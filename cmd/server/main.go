@@ -28,10 +28,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	locationRepository, err := postgres.NewLocationRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	stockLevelRepository, err := postgres.NewStockLevelRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	locationHandler, err := httpadapter.NewLocationHandler(locationRepository, stockLevelRepository)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/products/new", productHandler)
 	mux.Handle("/products", productHandler)
+	mux.Handle("/locations/new", locationHandler)
+	mux.Handle("/locations", locationHandler)
+	mux.Handle("/locations/", locationHandler)
 	mux.HandleFunc("/health", func(response http.ResponseWriter, _ *http.Request) {
 		response.WriteHeader(http.StatusOK)
 		_, _ = response.Write([]byte("ok\n"))
