@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/pedroj/go-inventory-management/internal/config"
+	"github.com/PedroJ03/go-inventory-management/internal/config"
 )
 
 func TestPostgreSQLDSN(t *testing.T) {

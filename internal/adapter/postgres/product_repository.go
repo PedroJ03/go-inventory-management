@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 
-	"github.com/pedroj/go-inventory-management/internal/application"
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/application"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 const (

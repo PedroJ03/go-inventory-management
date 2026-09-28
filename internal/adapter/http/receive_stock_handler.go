@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/pedroj/go-inventory-management/internal/application"
+	"github.com/PedroJ03/go-inventory-management/internal/application"
 )
 
 //go:embed templates/receive_stock_form.html

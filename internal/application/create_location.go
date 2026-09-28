@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 // CreateLocationInput contains the caller-provided location attributes.

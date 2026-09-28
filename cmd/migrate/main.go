@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/pedroj/go-inventory-management/internal/config"
-	"github.com/pedroj/go-inventory-management/internal/migrations"
+	"github.com/PedroJ03/go-inventory-management/internal/config"
+	"github.com/PedroJ03/go-inventory-management/internal/migrations"
 )
 
 func main() {

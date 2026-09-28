@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	httpadapter "github.com/pedroj/go-inventory-management/internal/adapter/http"
-	"github.com/pedroj/go-inventory-management/internal/adapter/postgres"
-	"github.com/pedroj/go-inventory-management/internal/config"
+	httpadapter "github.com/PedroJ03/go-inventory-management/internal/adapter/http"
+	"github.com/PedroJ03/go-inventory-management/internal/adapter/postgres"
+	"github.com/PedroJ03/go-inventory-management/internal/config"
 )
 
 func main() {

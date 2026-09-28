@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 var ErrLocationHasStock = errors.New("location has positive stock")

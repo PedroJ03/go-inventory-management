@@ -10,8 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 
-	"github.com/pedroj/go-inventory-management/internal/application"
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/application"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 func newStockReceivingRepositoryForTest(t *testing.T) (*StockReceivingRepository, sqlmock.Sqlmock, func()) {

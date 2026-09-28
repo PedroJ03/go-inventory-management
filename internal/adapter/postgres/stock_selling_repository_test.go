@@ -11,8 +11,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 
-	"github.com/pedroj/go-inventory-management/internal/application"
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/application"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 func newStockSellingRepositoryForTest(t *testing.T) (*StockSellingRepository, sqlmock.Sqlmock, func()) {

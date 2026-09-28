@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/pedroj/go-inventory-management/internal/config"
+	"github.com/PedroJ03/go-inventory-management/internal/config"
 )
 
 // Open creates a PostgreSQL connection pool. It does not change database schema.

@@ -1,4 +1,4 @@
-module github.com/pedroj/go-inventory-management
+module github.com/PedroJ03/go-inventory-management
 
 go 1.23.0
 

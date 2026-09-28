@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 type locationRepositoryFake struct {

@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/pedroj/go-inventory-management/internal/application"
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/application"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 const receiveStockLevelSQL = `INSERT INTO stock_levels (product_id, location_id, units) VALUES ($1, $2, $3) ON CONFLICT (product_id, location_id) DO UPDATE SET units = stock_levels.units + EXCLUDED.units RETURNING product_id, location_id, units`

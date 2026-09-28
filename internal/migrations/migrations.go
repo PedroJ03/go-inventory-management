@@ -12,7 +12,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	"github.com/pedroj/go-inventory-management/internal/config"
+	"github.com/PedroJ03/go-inventory-management/internal/config"
 )
 
 // Run applies all pending SQL migrations from the repository migrations directory.

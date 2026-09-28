@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/pedroj/go-inventory-management/internal/application"
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/application"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 const transferStockLevelSQL = `UPDATE stock_levels SET units = units - $3 WHERE product_id = $1 AND location_id = $2 AND units >= $3 RETURNING product_id, location_id, units`

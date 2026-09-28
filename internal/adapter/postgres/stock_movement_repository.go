@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 
-	"github.com/pedroj/go-inventory-management/internal/application"
-	"github.com/pedroj/go-inventory-management/internal/domain"
+	"github.com/PedroJ03/go-inventory-management/internal/application"
+	"github.com/PedroJ03/go-inventory-management/internal/domain"
 )
 
 const insertStockMovementSQL = `INSERT INTO stock_movements (type, units, product_id, from_location_id, to_location_id, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, type, units, product_id, from_location_id, to_location_id, created_at`
